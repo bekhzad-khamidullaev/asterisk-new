@@ -48,6 +48,80 @@ same => n,Playback(/var/lib/asterisk/sounds/ru1)
 same => n,Hangup()
 
 
+; [test-in]
+; ;exten => _X.,1,Answer(500)
+; ;same => n,GoSub(all-in,_X.,1(${EXTEN}))
+; ;same => n,GoSub(data-extract,s,1)
+; ;same => n,GotoIfTime(${WORKTIME},*,*,*?test-lng,s,1)
+; ;same => n,GoTo(go-sleep,_X.,1(${EXTEN}))
+; ; exten => _X.,1,DIal(PJSIP/1333)
+; ;exten => black,1,Hangup()
+
+; exten => 5555,1,Answer(500)
+; same => n,GoSub(all-in,_X.,1(${EXTEN}))
+; ; same => n,GoSub(data-extract,s,1)
+; same => n,GotoIfTime(${WORKTIME},*,*,*?test-lng,s,1)
+; same => n,GoTo(go-sleep,_X.,1(${EXTEN}))
+
+; [data-extract]
+; exten => s,1,SET(JSON_RESULT_ORDERS=${SHELL(/usr/bin/bash /var/lib/asterisk/agi-bin/data_extract.sh ${CALLERIDGLOB})})
+; same => n,Set(__OrderID=${JSON_DECODE(JSON_RESULT_ORDERS,uniqueID)})
+; same => n,Set(__PaymentStatus=${JSON_DECODE(JSON_RESULT_ORDERS,lastPaymentStatusId)})
+; same => n,Set(__DeliveryStatus=${JSON_DECODE(JSON_RESULT_ORDERS,lastStatusId)})
+; same => n,return
+
+; [test-lng]
+; exten => s,1,Background(evos/uz/welcome_start&evos/ru/welcome_start&evos/select_uz_press_1&evos/select_ru_press_2,m)
+; exten => s,n,WaitExten(5)
+
+; exten => 1,1,Set(__LNG=uz)
+; same => n,Set(CHANNEL(language)=uz)
+; same => n,GoSub(test-input,s,1)
+
+; exten => 2,1,Set(__LNG=ru)
+; same => n,Set(CHANNEL(language)=ru1)
+; same => n,GoSub(test-input,s,1)
+
+; [test-input]
+
+; exten => s,1,Background(evos/${LNG}/create_order_press_1)
+; exten => s,n,Background(evos/${LNG}/check_status_press_2)
+; exten => s,n,Background(evos/${LNG}/problems_in_order_press_3)
+; exten => s,n,WaitExten(5)
+
+; exten => 2,1,Background(evos/${LNG}/you_order)
+; exten => 2,n,NoOP(${OrderID})
+; exten => 2,n,SayDigits(${OrderID})
+; exten => 2,n,GotoIF($[${DeliveryStatus} = 10]?999,1)
+; exten => 2,n,GotoIF($[${DeliveryStatus} = 5]?1000,1)
+; exten => 2,n,GotoIF($[${DeliveryStatus} = 8]?1001,1)
+; exten => 2,n,GotoIF($[${DeliveryStatus} = 3]?1002,1)
+; exten => 2,n,GotoIF($[${DeliveryStatus} = 4]?1002,1)
+; exten => 2,n,GotoIF($[${DeliveryStatus} = 1]?1003,1)
+
+
+; exten => 999,1,Background(evos/${LNG}/no_payment)
+; exten => 999,n,Background(evos/${LNG}/questions_press_1)
+
+; exten => 1000,1,Background(evos/${LNG}/delivery_complited)
+; exten => 1000,n,Background(evos/${LNG}/questions_press_1)
+
+; exten => 1001,1,Background(evos/${LNG}/in_delivery)
+; exten => 1001,n,Background(evos/${LNG}/questions_press_1)
+
+; exten => 1002,1,Background(evos/${LNG}/cooking)
+; exten => 1002,n,Background(evos/${LNG}/questions_press_1)
+
+; exten => 1003,1,Background(evos/${LNG}/order_start)
+; exten => 1003,n,Background(evos/${LNG}/questions_press_1)
+
+
+; exten => t,1,GotoIfTime(${WORKTIME},*,*,*?queue01,s,1)
+; exten => i,1,GotoIfTime(${WORKTIME},*,*,*?queue01,s,1)
+; exten => 3,1,GotoIfTime(${WORKTIME},*,*,*?queue03,s,1)
+; exten => 1,1,GotoIfTime(${WORKTIME},*,*,*?queue01,s,1)
+
+
 [night]
 exten => _X.,1,Playback(ru/night_ru)
 exten => _X.,n,Playback(ru/night_uz)
@@ -62,12 +136,12 @@ same => n,Set(__DIRECTION=INBOUND)
 
 
 exten => *300,1,PauseQueueMember(queue_01,PJSIP/${CALLERID(num)})
-same => n,Playback(beep)
+same => n,Playback(beeperr)
 same => n,Hangup
 
 exten => *301,1,UnpauseQueueMember(queue_01,PJSIP/${CALLERID(num)})
-same => n,AddQueueMember(queue_01,PJSIP/${CALLERID(num)})
-same => n,Playback(beeperr)
+; same => n,AddQueueMember(queue_01,PJSIP/${CALLERID(num)})
+same => n,Playback(beep)
 same => n,Hangup
 
 exten => *302,1,AddQueueMember(queue_01,PJSIP/${CALLERID(num)})
@@ -75,59 +149,51 @@ same => n,Playback(beep)
 same => n,Hangup
 
 exten => *303,1,RemoveQueueMember(queue_01,PJSIP/${CALLERID(num)})
-same => n,Playback(beeperr)
-same => n,Hangup
-
-exten => *402,1,AddQueueMember(queue_02,PJSIP/${CALLERID(num)})
 same => n,Playback(beep)
 same => n,Hangup
 
-exten => *403,1,RemoveQueueMember(queue_02,PJSIP/${CALLERID(num)})
-same => n,Playback(beeperr)
-same => n,Hangup
+; exten => *304,1,PauseQueueMember(queue_01,PJSIP/${CALLERID(num)})
+; same => n,Playback(beeperr)
+; same => n,Hangup
+
+; exten => *305,1,UnpauseQueueMember(queue_01,PJSIP/${CALLERID(num)})
+; same => n,AddQueueMember(queue_01,PJSIP/${CALLERID(num)})
+; same => n,Playback(beep)
+; same => n,Hangup
 
 
 [ADD_HEADER]
 exten => s,1,Set(PJSIP_HEADER(add,X-Linkedid)=${CDR(linkedid)})
 exten => s,n,Set(PJSIP_HEADER(add,X-UserId)=${UserId})
 exten => s,n,Set(PJSIP_HEADER(add,X-City)=${CITYGLOB})
+; exten => s,n,Set(UserId=${PJSIP_HEADER(UserId)})
 exten => s,n,Return()
 
 [survey]
 exten => s,1,Background(uzocenite&ruocenite)
 same => n,WaitExten(5)
-; same => n,Set(DATETIME=${STRFTIME(${EPOCH},,%d%m%Y-%H:%M:%S)})
+same => n,Set(Filename=/var/spool/asterisk/monitor/${UNIQUEID}.wav)
 same => n,Hangup
 
 exten => 1,1,Set(CDR(opinion)=1)
-; exten => 1,n,Set(CDR(userfield)=${MEMBER})
-; exten => 1,n,Set(DATETIME=${STRFTIME(${EPOCH},,%d%m%Y-%H:%M:%S)})
-exten => 1,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${DATETIME} ${CDR(src)} ${MEMBER} ${CDR(opinion)} ${UNIQUEID} ${CALLFILE}.mp3)
-exten => 1,n,Hangup()
+exten => 1,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${CDR(src)} ${MEMBER} ${queuename} 1 ${CDR(linkedid)} ${WAV}.wav)
+exten => 1,n,return
 
 exten => 2,1,Set(CDR(opinion)=2)
-; exten => 2,n,Set(CDR(userfield)=${MEMBER})
-; exten => 2,n,Set(DATETIME=${STRFTIME(${EPOCH},,%d%m%Y-%H:%M:%S)})
-exten => 2,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${DATETIME} ${CDR(src)} ${MEMBER} ${CDR(opinion)} ${UNIQUEID} ${CALLFILE}.mp3)
-exten => 2,n,Hangup()
+exten => 2,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${CDR(src)} ${MEMBER} ${queuename} 2 ${CDR(linkedid)} ${WAV}.wav)
+exten => 2,n,return
 
 exten => 3,1,Set(CDR(opinion)=3)
-; exten => 3,n,Set(CDR(userfield)=${MEMBER})
-; exten => 3,n,Set(DATETIME=${STRFTIME(${EPOCH},,%d%m%Y-%H:%M:%S)})
-exten => 3,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${DATETIME} ${CDR(src)} ${MEMBER} ${CDR(opinion)} ${UNIQUEID} ${CALLFILE}.mp3)
-exten => 3,n,Hangup()
+exten => 3,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${CDR(src)} ${MEMBER} ${queuename} 3 ${CDR(linkedid)} ${WAV}.wav)
+exten => 3,n,return
 
 exten => 4,1,Set(CDR(opinion)=4)
-; exten => 4,n,Set(CDR(userfield)=${MEMBER})
-; exten => 4,n,Set(DATETIME=${STRFTIME(${EPOCH},,%d%m%Y-%H:%M:%S)})
-exten => 4,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${DATETIME} ${CDR(src)} ${MEMBER} ${CDR(opinion)} ${UNIQUEID} ${CALLFILE}.mp3)
-exten => 4,n,Hangup()
+exten => 4,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${CDR(src)} ${MEMBER} ${queuename} 4 ${CDR(linkedid)} ${WAV}.wav)
+exten => 4,n,return
 
 exten => 5,1,Set(CDR(opinion)=5)
-; exten => 5,n,Set(CDR(userfield)=${MEMBER})
-; exten => 5,n,Set(DATETIME=${STRFTIME(${EPOCH},,%d%m%Y-%H:%M:%S)})
-exten => 5,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${DATETIME} ${CDR(src)} ${MEMBER} ${CDR(opinion)} ${UNIQUEID} ${CALLFILE}.mp3)
-exten => 5,n,Hangup()
+exten => 5,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${CDR(src)} ${MEMBER} ${queuename} 5 ${CDR(linkedid)} ${WAV}.wav)
+exten => 5,n,return
 
 exten => h,1,NoOp(h context in survey)
 
@@ -148,21 +214,11 @@ exten => s,1,Set(QUEUE_PRIO=${PRIO})
 same => n,Queue(queue_01,Rbc(ADD_HEADER^s^1))
 same => n,Set(__MEMBER=${MEMBERNAME:-4})
 same => n,NoOP(${UserId})
+same => n,UserEvent(CustomEvent,UserId:${UserId},City:${X-City})
 same => n,Set(__queuename=queue_01)
 same => n,Goto(survey,s,1)
 exten => h,1,NoOp(h context in queue_01)
 exten => h,n,Hangup()
-
-[queue_02]
-exten => s,1,Set(QUEUE_PRIO=${PRIO})
-same => n,Queue(queue_02,Rbc(ADD_HEADER^s^1))
-same => n,Set(__MEMBER=${MEMBERNAME:-4})
-same => n,NoOP(${UserId})
-same => n,Set(__queuename=queue_02)
-same => n,Goto(survey,s,1)
-exten => h,1,NoOp(h context in queue_02)
-exten => h,n,Hangup()
-
 
 [queue03]
 exten => s,1,Set(QUEUE_PRIO=${PRIO})
@@ -172,12 +228,14 @@ same => n,Set(__queuename=queue_03)
 same => n,GoSub(survey,s,1)
 same => n,hangup()
 
+;exten => s,n,Queue(queue_03,Rb(ADD_HEADER^s^1))
+;exten => _[a-zA-Z],1,Set(QUEUE_PRIO=${PRIO})
+
 exten => h,1,NoOp(h context in queue_03)
 exten => h,n,Hangup()
 
 [queue05]
 exten => _X.,1,Set(QUEUE_PRIO=${PRIO})
-; exten => _X.,n,Set(DATETIME=${STRFTIME(${EPOCH},,%d%m%Y-%H:%M:%S)})
 exten => _X.,n,Queue(queue_05,Rb(ADD_HEADER^s^1))
 
 exten => _[a-zA-Z],1,Set(QUEUE_PRIO=${PRIO})
@@ -188,33 +246,29 @@ same => n,Background(uzocenite&ruocenite)
 
 
 exten => 1,1,Set(CDR(opinion)=1)
-; exten => 1,n,Set(CDR(userfield)=${MEMBER})
-; exten => 1,n,Set(DATETIME=${STRFTIME(${EPOCH},,%d%m%Y-%H:%M:%S)})
-exten => 1,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${DATETIME} ${CDR(src)} ${MEMBER} ${CDR(opinion)} ${UNIQUEID} ${CALLFILE}.mp3)
+exten => 1,n,Set(CDR(userfield)=${MEMBER})
+exten => 1,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${CDR(src)} ${MEMBER} ${queuename} 5 ${CDR(linkedid)} ${WAV}.wav)
 exten => 1,n,Hangup()
 
 exten => 2,1,Set(CDR(opinion)=2)
-; exten => 2,n,Set(CDR(userfield)=${MEMBER})
-; exten => 2,n,Set(DATETIME=${STRFTIME(${EPOCH},,%d%m%Y-%H:%M:%S)})
-exten => 2,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${DATETIME} ${CDR(src)} ${MEMBER} ${CDR(opinion)} ${UNIQUEID} ${CALLFILE}.mp3)
+exten => 2,n,Set(CDR(userfield)=${MEMBER})
+exten => 2,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${CDR(src)} ${MEMBER} ${queuename} 5 ${CDR(linkedid)} ${WAV}.wav)
 exten => 2,n,Hangup()
 
 exten => 3,1,Set(CDR(opinion)=3)
-; exten => 3,n,Set(CDR(userfield)=${MEMBER})
-; exten => 3,n,Set(DATETIME=${STRFTIME(${EPOCH},,%d%m%Y-%H:%M:%S)})
-exten => 3,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${DATETIME} ${CDR(src)} ${MEMBER} ${CDR(opinion)} ${UNIQUEID} ${CALLFILE}.mp3)
+exten => 3,n,Set(CDR(userfield)=${MEMBER})
+exten => 3,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${CDR(src)} ${MEMBER} ${queuename} 5 ${CDR(linkedid)} ${WAV}.wav)
 exten => 3,n,Hangup()
 
 exten => 4,1,Set(CDR(opinion)=4)
-; exten => 4,n,Set(CDR(userfield)=${MEMBER})
-; exten => 4,n,Set(DATETIME=${STRFTIME(${EPOCH},,%d%m%Y-%H:%M:%S)})
-exten => 4,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${DATETIME} ${CDR(src)} ${MEMBER} ${CDR(opinion)} ${UNIQUEID} ${CALLFILE}.mp3)
+exten => 4,n,Set(CDR(userfield)=${MEMBER})
+exten => 4,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${CDR(src)} ${MEMBER} ${queuename} 5 ${CDR(linkedid)} ${WAV}.wav)
 exten => 4,n,Hangup()
 
 exten => 5,1,Set(CDR(opinion)=5)
-; exten => 5,n,Set(CDR(userfield)=${MEMBER})
-; exten => 5,n,Set(DATETIME=${STRFTIME(${EPOCH},,%d%m%Y-%H:%M:%S)})
-exten => 5,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${DATETIME} ${CDR(src)} ${MEMBER} ${CDR(opinion)} ${UNIQUEID} ${CALLFILE}.mp3)
+exten => 5,n,Set(CDR(userfield)=${MEMBER})
+exten => 5,n,NoOp(${CDR(linkedid)})
+exten => 5,n,System(/var/lib/asterisk/agi-bin/venv/bin/python3 /var/lib/asterisk/agi-bin/survey.py ${CDR(src)} ${MEMBER} ${queuename} 5 ${CDR(linkedid)} ${WAV}.wav)
 exten => 5,n,Hangup()
 
 
@@ -266,6 +320,7 @@ exten => *43,1,GoSub(app-echo-test,s,1)
 [local-out-1218]
 exten => 5555,1,Answer(500)
 same => n,GoSub(all-in,_X.,1(${EXTEN}))
+; same => n,GoSub(data-extract,s,1)
 same => n,GotoIfTime(${WORKTIME},*,*,*?test-lng,s,1)
 same => n,GoTo(go-sleep,_X.,1(${EXTEN}))
 
@@ -277,20 +332,44 @@ exten => _XXXXXXXXX,2,Dial(PJSIP/${EXTEN}@712031218)
 
 
 [sub-monitor]
-exten => s,1,Set(CALLFILE=/var/spool/asterisk/monitor/${STRFTIME(${EPOCH},,%Y)}/${STRFTIME(${EPOCH},,%m)}/${STRFTIME(${EPOCH},,%d)}/${STRFTIME(${EPOCH},,%d-%m-%Y_%H:%M)}-${CALLERID(number)}-${UNIQUEID})
-exten => s,n,Set(convert_to_mp3=nice -n 19 /usr/bin/lame -b 64 --silent "${CALLFILE}.wav" "${CALLFILE}.mp3" && rm -f "${CALLFILE}.wav" && chmod 777 "${CALLFILE}.mp3")
-exten => s,n,Set(CDR(record)=${CALLFILE}.mp3)
+exten => s,1,Set(WAV=/var/spool/asterisk/monitor/${YEAR}/${MONTH}/${DAY}/${STRFTIME(${EPOCH},,%d-%m-%Y_%H:%M)}-${CALLERID(number)}-${DIRECTION})
+exten => s,n,Set(MP3=/var/spool/asterisk/monitor/${YEAR}/${MONTH}/${DAY}/${STRFTIME(${EPOCH},,%d-%m-%Y_%H:%M)}-${CALLERID(number)}-${DIRECTION})
+exten => s,n,Set(monopt=nice -n 19 /usr/bin/lame -b 64 --silent "${WAV}.wav" "${MP3}.mp3" && rm -f "${WAV}.wav" && chmod 777 "${MP3}.mp3")
+exten => s,n,Set(CDR(recordingfile)=${MP3}.mp3)
+; exten => s,n,Set(CDR(recordingfile)=${ASTSPOOLDIR}/monitor/${MIXMON_DIR}${STRFTIME(${EPOCH},,%d-%m-%Y_%H:%M)}-${CALLERID(number)}-${MEMBER}.mp3)
+exten => s,n,Set(CDR(record)=${MP3}.mp3)
+; exten => s,n,Set(CDR(userfield)=${CALLERID(dnid)})
 exten => s,n,Set(CDR(dnid)=${MEMBER})
 exten => s,n,Set(CDR(cnum)=${CALLERID(num)})
-exten => s,n,Set(CDR(cnam)=PJSIP/${CALLERID(num)})
+exten => s,n,Set(CDR(cnam)=${CALLERID(name)})
 exten => s,n,Set(CDR(hangup_cause)=${HANGUPCAUSE})
-exten => s,n,Set(CDR(dst_cnam)=${CDR(dstchannel)})
-exten => s,n,MixMonitor(${CALLFILE}.wav,b,${convert_to_mp3})
+exten => s,n,MixMonitor(${WAV}.wav,b,${monopt})
 exten => s,n,return
+
+; [sub-monitor-in]
+; exten => s,1,Set(WAV=/var/spool/asterisk/monitor/${STRFTIME(${EPOCH},,%d-%m-%Y_%H:%M)}-${CALLERID(number)}-${MEMBER})
+; exten => s,n,Set(MP3=/var/spool/asterisk/monitor/in-${STRFTIME(${EPOCH},,%d-%m-%Y_%H:%M)}-${CALLERID(number)}-${MEMBER})
+; exten => s,n,Set(MEMBER=${MEMBERNAME:-4})
+; exten => s,n,Set(monopt=nice -n 19 /usr/bin/lame -b 64 --silent "${WAV}.wav" "${MP3}.mp3" && rm -f "${WAV}.wav" && chmod 777 "${MP3}.mp3")
+; exten => s,n,MixMonitor(${WAV}.wav,b,${monopt})
+; exten => s,n,return
+
+
+; [convert-to-mp3]
+; exten => s,1,Set(WAV=/var/spool/asterisk/monitor/${STRFTIME(${EPOCH},,%d-%m-%Y_%H:%M)}-${CALLERID(number)}-${MEMBER})
+; exten => s,n,Set(MP3=/var/www/html/iprec/wav/in-${STRFTIME(${EPOCH},,%d-%m-%Y_%H:%M)}-${CALLERID(number)}-${MEMBER})
+; exten => s,n,Set(MEMBER=${MEMBERNAME:-4})
+; exten => s,n,System(nice -n 19 /usr/bin/lame -b 64 --silent "${WAV}.wav" "${MP3}.mp3" && rm -f "${WAV}.wav" && chmod 777 "${MP3}.mp3")
+; exten => s,n,Set(CDR(record)=in-${STRFTIME(${EPOCH},,%d-%m-%Y_%H:%M)}-${CALLERID(number)}-${MEMBER}.mp3)
+; exten => s,n,Set(CDR(userfield)=${MEMBER})
+; exten => s,n,Set(CDR(dnid)=${MEMBER})
+; exten => s,n,Set(CDR(cnum)=${CALLERID(num)})
+; exten => s,n,Set(CDR(cnam)=${CALLERID(nam)})
+; exten => s,n,Set(CDR(hangup_cause)=${HANGUPCAUSE})
 
 [variables]
 exten => s,1,Set(MEMBER=${MEMBERNAME:-4})
-exten => s,n,Set(CDR(recordingfile)=in-${STRFTIME(${EPOCH},,%d-%m-%Y_%H:%M)}-${CALLERID(number)}-${UNIQUEID}.mp3)
+exten => s,n,Set(CDR(record)=in-${STRFTIME(${EPOCH},,%d-%m-%Y_%H:%M)}-${CALLERID(number)}-${DIRECTION}.mp3)
 exten => s,n,Set(CDR(did)=${CALLERID(dnid)})
 exten => s,n,Set(CDR(userfield)=${MEMBER})
 exten => s,n,return
