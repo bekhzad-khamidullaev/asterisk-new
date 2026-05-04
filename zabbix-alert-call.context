@@ -1,0 +1,10 @@
+[zabbix-alert-call]
+exten => s,1,NoOp(Zabbix voice alert call event=${ALERT_EVENTID} phone=${ALERT_PHONE})
+ same => n,Set(CHANNEL(language)=ru)
+ same => n,Set(ALERT_PREGENERATE=1)
+ same => n,AGI(zabbix_tts_alert.py)
+ same => n,Answer()
+ same => n,Wait(1)
+ same => n,ExecIf($["${ALERT_PLAYBACK}" != ""]?Playback(${ALERT_PLAYBACK}))
+ same => n,ExecIf($["${ALERT_PLAYBACK}" = ""]?Playback(beeperr))
+ same => n,Hangup()

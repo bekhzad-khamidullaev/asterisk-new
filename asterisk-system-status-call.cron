@@ -1,0 +1,1 @@
+0 6 * * * asterisk /usr/bin/python3 /etc/asterisk/scripts/system_status_call.py >> /var/log/asterisk/system_status_call.log 2>&1

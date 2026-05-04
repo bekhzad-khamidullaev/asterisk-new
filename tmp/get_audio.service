@@ -1,0 +1,12 @@
+[Unit]
+Description=Get Asterisk Call record files from API for evsui.ectn.uz
+After=network.target
+
+[Service]
+User=asterisk
+WorkingDirectory=/var/lib/asterisk/agi-bin
+ExecStart=/var/lib/asterisk/agi-bin/venv/bin/python /var/lib/asterisk/agi-bin/get_audio.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

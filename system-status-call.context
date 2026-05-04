@@ -1,0 +1,6 @@
+[system-status-call]
+exten => s,1,Answer()
+ same => n,Wait(1)
+ same => n,ExecIf($["${STATUS_AUDIO}" = ""]?Playback(beeperr))
+ same => n,ExecIf($["${STATUS_AUDIO}" != ""]?Playback(${STATUS_AUDIO}))
+ same => n,Hangup()

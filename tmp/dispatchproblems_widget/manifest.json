@@ -1,0 +1,23 @@
+{
+  "manifest_version": 2.0,
+  "id": "dispatchproblems",
+  "type": "widget",
+  "name": "Dispatch Problems",
+  "namespace": "DispatchProblems",
+  "version": "1.0",
+  "author": "TSHTT",
+  "description": "Dispatch Center widget based on the Problems page with dispatcher actions and RCA workflow.",
+  "url": "web_interface/frontend_sections/dashboards/widgets/dispatch-problems",
+  "widget": {
+    "js_class": "CWidgetDispatchProblems",
+    "refresh_rate": 300
+  },
+  "actions": {
+    "widget.dispatchproblems.view": {
+      "class": "WidgetView"
+    }
+  },
+  "assets": {
+    "js": ["class.widget.js"]
+  }
+}

@@ -1,0 +1,1 @@
+15 1 * * * root RETENTION_MONTHS=3 /usr/local/sbin/archive_recordings.sh >> /var/log/asterisk_recording_archive.log 2>&1

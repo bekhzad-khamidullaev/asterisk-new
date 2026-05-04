@@ -1,0 +1,4 @@
+0 0 1 1 * asterisk mkdir -p /var/spool/asterisk/monitor/$(date +'%Y')
+0 0 1 * * asterisk mkdir -p /var/spool/asterisk/monitor/$(date +'%Y')/$(date +'%m')
+0 0 * * * asterisk mkdir -p /var/spool/asterisk/monitor/$(date +'%Y')/$(date +'%m')/$(date +'%d')
+0 6 * * * asterisk chmod 755 -R /var/spool/asterisk/monitor
